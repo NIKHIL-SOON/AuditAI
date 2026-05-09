@@ -1,16 +1,31 @@
-# Tests
+# Test Suite Coverage (Day 2)
 
-The test suite ensures the integrity of the core audit engine. Since it involves financial data and recommendations, accuracy is paramount.
+## Unit Testing Approach
+We have implemented a **Test-Driven Development (TDD)** approach for the core financial business logic, the Audit Engine (`lib/audit-engine.ts`). Because this engine dictates the financial savings metrics displayed to users, it must be 100% deterministic and heavily tested against edge cases to prevent any loss of trust.
 
-To run the tests:
-\`\`\`bash
-npm run test
-\`\`\`
+We are using **Vitest** for its extreme execution speed and native TypeScript support without complex configuration overhead.
 
-## Included Tests (in \`__tests__/audit-engine.test.ts\`)
+## Test Cases Implemented
 
-1. \`calculates correct spend for Cursor Enterprise with 10 users\`: Ensures that a straight multiplication of seats * tier price matches the expected monthly and annual spend.
-2. \`recommends downgrading from Claude Team to Pro for 2 users\`: Validates the rightsizing logic. Claude Team requires a 5 seat minimum (which costs $150/mo), so a 2-person team should just use 2 Pro seats ($40/mo).
-3. \`identifies cheaper alternative: suggests Windsurf over Copilot Enterprise for specific coding setups\`: Checks the alternative recommendation logic when current spend is higher than the capable alternative.
-4. \`handles retail vs credit evaluation correctly\`: Flags scenarios where the startup is paying full retail for high-volume API access, recommending Credex credits.
-5. \`returns optimal state when startup is efficiently spending\`: Ensures that if a user is on the correct plan and not overspending, the engine honestly returns "You're spending well" with $0 savings.
+The following critical paths are actively covered in `__tests__/audit-engine.test.ts`:
+
+1. **Coding Assistant Consolidation**
+   - **Condition**: User inputs both `Cursor` and `GitHub Copilot`.
+   - **Expectation**: The engine accurately identifies the overlapping seat count, recommends dropping `Copilot` in favor of `Cursor`'s built-in autocomplete, and calculates the exact monthly and annual savings.
+
+2. **Seat-Based Tier Optimization**
+   - **Condition**: User inputs `Cursor` on the `Business` tier ($40/mo), but has fewer than 5 users.
+   - **Expectation**: The engine accurately triggers a downgrade recommendation to the `Pro` tier ($20/mo), calculating the precise difference multiplied by the seat count.
+
+3. **Chatbot Overlap**
+   - **Condition**: User inputs both `ChatGPT` and `Claude` for the same team.
+   - **Expectation**: The engine identifies the overlap, recommends standardizing on a single platform, and aggregates the savings.
+
+4. **Zero-Savings State (Optimized Stack)**
+   - **Condition**: User inputs an already perfectly optimized stack (e.g., Cursor Pro + Claude Pro for different users without overlap).
+   - **Expectation**: The engine returns `$0` in savings and `0` recommendations, proving it does not hallucinate false savings just to generate a report.
+
+## Future Testing Scope
+In subsequent phases (Days 3-7), we will add:
+1. **React Component Testing**: Using React Testing Library to ensure the dynamically generated form inputs match the required UI schema.
+2. **E2E Testing**: A Playwright suite to trace a user's flow from the landing page, through the audit, to the final email capture modal.
