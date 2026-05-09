@@ -1,39 +1,51 @@
 # Unit Economics
 
-If Credex deploys this tool, here is the economic model for its viability as a lead-gen asset.
+To justify dedicating engineering resources to this AI Spend Audit tool, it must function as a highly profitable lead-generation asset. Here is the detailed breakdown of unit economics, acquisition costs, and the mathematical path to $1M ARR.
 
-## Value of a Converted Lead
+## Value of a Converted Lead (LTV)
+We estimate the downstream value of the core Credex product (discounted AI infrastructure credits).
 - **Assumptions**: 
-  - A startup saving >$500/month through Credex buys an average of $2,000/month in credits.
-  - Credex takes a 15% margin on those credits.
-  - Average lifespan of the startup customer is 18 months.
-- **LTV Calculation**: $2,000 * 15% = $300/mo gross profit. $300 * 18 = **$5,400 LTV per closed won customer**.
+  - A startup discovering >$500/month in actionable savings is our Ideal Customer Profile (ICP).
+  - When this ICP converts, they purchase an average of $2,000/month in assorted AI credits through Credex.
+  - Credex operates on an average margin of 15% on these brokered credits.
+  - The average lifespan of a startup customer is 18 months.
+- **Lifetime Value (LTV) Calculation**: 
+  - $2,000 monthly spend * 15% margin = $300/month gross profit per customer.
+  - $300/mo * 18 months = **$5,400 LTV per closed-won customer**.
 
 ## Customer Acquisition Cost (CAC)
-With an organic GTM strategy ($0 paid ad spend), the CAC is primarily the amortized cost of engineering time and minor infrastructure costs.
-- **Infra Cost per Audit**: ~$0.02 (Anthropic API summary + DB read/write).
-- **Time Cost**: 1 hour of SDR time to follow up on a qualified lead (~$40).
-- **Blended CAC**: Assuming 1 in 20 audits yields a qualified lead, infra cost per lead = $0.40. Plus $40 SDR time = **$40.40 CAC per qualified lead**.
+With a Go-To-Market plan relying entirely on organic channels ($0 paid ad spend), our CAC derives from infrastructure and human capital.
+- **Infrastructure Cost per Audit**: The Next.js hosting is negligible. The Anthropic API call for the summary (~$0.01) and Supabase read/writes (~$0.01) equal $0.02 per audit.
+- **Sales Cost**: An SDR spends approximately 1 hour qualifying and conducting a consultation call. Fully loaded SDR cost is ~$40/hour.
+- **Blended CAC**: Assuming 1 out of 20 completed audits yields a qualified lead, it costs 20 * $0.02 = $0.40 in infra. Adding the $40 SDR time, our **CAC is $40.40 per qualified lead worked**.
 
 ## Conversion Rates for Profitability
-To be wildly profitable, the conversion funnel needs to hit these baselines:
-- **Visitor to Audit**: 15%
-- **Audit to Email Capture**: 25%
-- **Email Capture to Qualified Lead (>$500 savings)**: 10%
-- **Qualified Lead to Consultation Booked**: 20%
-- **Consultation to Credit Purchase (Close Rate)**: 50%
+To ensure profitability, the conversion funnel must hit these baseline metrics:
+- **Visitor to Audit Completed**: 15% (Requires a frictionless UI).
+- **Audit to Email Capture**: 25% (Users trade email to save the report).
+- **Email Capture to Sales Qualified Lead (SQL)**: 10% (Only 10% have >$500/mo savings).
+- **SQL to Consultation Booked**: 20% (SDR successfully schedules a call).
+- **Consultation to Closed Won**: 50% (Savings were mathematically proven).
 
-*From 10,000 visitors:*
--> 1,500 audits -> 375 emails -> 37 qualified leads -> 7.5 consultations -> **3.75 closed deals.**
-*Revenue generated*: 3.75 deals * $5,400 LTV = **$20,250**.
-*Cost*: 1,500 audits * $0.02 = $30. Plus SDR time (37 leads * $40) = $1,480. Total Cost: $1,510.
-*ROI*: 13x.
+**Funnel Simulation for 10,000 Visitors:**
+- 10,000 Visitors -> 1,500 Audits Completed.
+- 1,500 Audits -> 375 Emails Captured.
+- 375 Emails -> 37 SQLs.
+- 37 SQLs -> 7.5 Consultations Booked.
+- 7.5 Consultations -> **3.75 Closed Won Customers.**
+
+**ROI Calculation:**
+- Revenue Generated: 3.75 deals * $5,400 LTV = **$20,250**.
+- Total Cost: 1,500 audits * $0.02 ($30) + SDR time on 37 SQLs ($1,480) = **$1,510**.
+- Return on Investment: ~13x ROI.
 
 ## Path to $1M ARR in 18 Months
-To generate $1M ARR ($83k MRR), Credex needs ~277 active customers paying $300/mo in margin.
-Using the 50% close rate on consultations, we need 554 consultations.
-Using the 20% consultation booking rate, we need 2,770 qualified leads.
-Using the 10% qualification rate, we need 27,700 captured emails.
-Using the 25% capture rate, we need 110,800 audits completed.
-Over 18 months, that is ~**6,155 audits per month** (~200 per day).
-*What must be true*: The viral loop (sharing results on Twitter/HN) must contribute at least a 0.2 K-factor (every 5 audits brings 1 new audit) to sustain traffic without scaling paid ads.
+To generate $1,000,000 in Annual Recurring Revenue ($83,333 Monthly Recurring Revenue), Credex needs approximately **277 active customers** paying that $300/mo margin.
+
+Working backward through the funnel over 18 months:
+- At a 50% close rate, we need 554 consultations.
+- At a 20% booking rate, we need 2,770 SQLs.
+- At a 10% qualification rate, we need 27,700 captured emails.
+- At a 25% capture rate, we need **110,800 completed audits**.
+
+This requires sustaining **~6,155 audits per month**. The shareable result URL must achieve a K-factor of at least 0.2 to sustain traffic. If organic growth stalls, the 13x ROI buffer allows Credex to easily afford paid ads while remaining profitable.
