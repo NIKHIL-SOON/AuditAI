@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateSpend, AuditContext } from '../lib/audit-engine';
+import { evaluateSpend, AuditContext } from './audit-engine';
 
 describe('Audit Engine Evaluator', () => {
   it('should recommend consolidating Cursor and Copilot', () => {

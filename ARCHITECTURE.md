@@ -1,31 +1,26 @@
 # Architecture
 
 ## System Diagram
-\`\`\`mermaid
+```mermaid
 graph TD
-    Client[Client Browser]
-    NextJS[Next.js App Router]
-    AuditEngine[Audit Engine<br>lib/audit-engine.ts]
+    Client[Client Browser (Frontend)]
+    NextJS[Next.js API Route (Frontend)]
+    AuditEngine[Backend Audit Engine<br>backend/api/audit-engine.ts]
     LLM[Anthropic API]
     DB[(Supabase PostgreSQL)]
     Email[Resend API]
-    RateLimit[(Rate Limiter / Abuse Protection)]
 
-    Client -- "1. Submits AI Tool Spend (Form)" --> NextJS
-    NextJS -- "2. Calculates Savings & Recommendations" --> AuditEngine
+    Client -- "1. Submits AI Tool Spend via @/frontend" --> NextJS
+    NextJS -- "2. Invokes @/backend engine" --> AuditEngine
     AuditEngine -. "Returns Hardcoded Results" .-> NextJS
 
     NextJS -- "3. Requests Personalized Summary" --> LLM
     LLM -. "Returns ~100-word Summary" .-> NextJS
 
-    Client -- "4. Submits Email to Save/Share" --> NextJS
-    NextJS -- "5. Checks Limits" --> RateLimit
-    NextJS -- "6. Stores Audit Data + Lead" --> DB
-    NextJS -- "7. Triggers Confirmation Email" --> Email
-
-    Client -- "8. Views Shareable URL (/audit/[id])" --> NextJS
-    NextJS -- "9. Fetches Public Data" --> DB
-\`\`\`
+    Client -- "4. Submits Email" --> NextJS
+    NextJS -- "5. Stores Audit Data + Lead" --> DB
+    NextJS -- "6. Triggers Confirmation Email" --> Email
+```
 
 ## Stack Choice
 - **Frontend/Backend**: Next.js (App Router) provides a unified stack. Server Actions allow easy integration with the database without building a separate REST API.

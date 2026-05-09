@@ -20,3 +20,9 @@ A free web app for startups to audit their AI tool spending and discover cost-sa
 
 ## Deployed URL
 *(To be added upon deployment)*
+
+## Project Structure
+We utilize a strict separation of concerns via an npm workspace monorepo:
+- **/frontend**: Next.js 14 App Router, housing the UI, components, and client-side logic.
+- **/backend**: Dedicated folder for the pure TypeScript Audit Engine, schemas, and API routes.
+This separation ensures scalability and security, isolating business logic from the UI.
