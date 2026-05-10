@@ -25,3 +25,9 @@
 **What I learned:** Best practices for integrating server-side API calls with third-party AI models while handling Next.js App Router boundaries.
 **Blockers / what I'm stuck on:** Handling AI API failures (rate limits, missing keys). I resolved this by writing a robust `try/catch` block that traps the error and returns a mathematically-templated, professional summary fallback. The user never sees a crash.
 **Plan for tomorrow:** Final polish, implementation of export/sharing features, and comprehensive QA before submission on Day 5.
+
+### Day 5: Lead Capture & Transactional Email Pipeline
+- **Database Architecture**: Integrated `@supabase/supabase-js` into the backend to handle lead storage. Uses the pre-provided Supabase REST API credentials to securely store audit form data directly to the `audit_leads` table via server-side inserts, keeping credentials isolated from the frontend.
+- **Security Check**: Implemented a "honeypot" text field embedded cleanly in the frontend UI (`hidden` & out of tab index). The Server Action immediately rejects any submission where this field is populated, protecting the database from basic bot spam.
+- **Transactional Communication**: Integrated `resend` to trigger email summaries. The email logic uses deterministic formatting. If total monthly savings > $500, the message dynamically embeds a custom call-to-action encouraging the recipient to book a Credex Consultation, aligning perfectly with the business's lead generation strategy.
+- **Form UI & Server Actions**: Wrapped `captureLeadAction` as a Next.js Server Action (`frontend/app/actions.ts`), ensuring complete obfuscation of backend services from the client. The frontend elegantly handles loading state, disabling the button during flight, and surfaces the generated unique ID from Supabase directly to the user as a success message for shareability (Day 6 preparation).
