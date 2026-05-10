@@ -8,7 +8,6 @@ import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/frontend/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
-import { evaluateSpend } from "@/backend/api/audit-engine";
 
 export const toolSchema = z.object({
   name: z.string().min(1, "Tool name is required"),
@@ -54,6 +53,7 @@ export function SpendForm() {
   }, []);
 
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/incompatible-library
     const subscription = watch((value) => {
       if (isMounted) {
         setSavedData(value as FormValues);
@@ -71,7 +71,7 @@ export function SpendForm() {
     return null; // Avoid hydration mismatch on initial render
   }
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = () => {
     // Form is already saved by watch hook
     router.push("/results");
   };

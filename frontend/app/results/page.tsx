@@ -9,9 +9,10 @@ import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { ArrowLeft, TrendingDown } from "lucide-react";
 import Link from "next/link";
+import { FormValues } from "@/frontend/components/spend-form";
 
 export default function ResultsPage() {
-  const [savedData] = useLocalStorage<any>("audit-form-state", null);
+  const [savedData] = useLocalStorage<FormValues | null>("audit-form-state", null);
   const [result, setResult] = useState<AuditResult | null>(null);
   const [summary, setSummary] = useState<string>("Analyzing your AI stack...");
 
@@ -46,6 +47,7 @@ export default function ResultsPage() {
         teamSize: savedData.teamSize,
         tools: savedData.tools
       });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResult(res);
 
       // Fetch AI summary
@@ -157,7 +159,7 @@ export default function ResultsPage() {
             <div className="relative z-10 space-y-6">
               <h2 className="text-3xl font-extrabold text-white">Unlock Enterprise Savings</h2>
               <p className="text-xl text-indigo-200 max-w-2xl mx-auto">
-                You're losing over $500/mo to inefficient tool sprawl. Book a free consultation with a Credex expert to restructure your enterprise stack.
+                You&apos;re losing over $500/mo to inefficient tool sprawl. Book a free consultation with a Credex expert to restructure your enterprise stack.
               </p>
               <Button size="lg" className="bg-white text-indigo-900 hover:bg-gray-100 text-lg px-8 py-6 font-bold rounded-xl shadow-lg">
                 Book Credex Consultation
