@@ -29,9 +29,12 @@ const PREDEFINED_TOOLS = [
 ];
 
 import { useLocalStorage } from "@/frontend/hooks/use-local-storage";
+import { useRouter } from "next/navigation";
 
 export function SpendForm() {
+  const router = useRouter();
   const [isMounted, setIsMounted] = React.useState(false);
+
   const [savedData, setSavedData] = useLocalStorage<FormValues | null>("audit-form-state", null);
 
   const { register, control, handleSubmit, watch, reset, formState: { errors } } = useForm<FormValues>({
@@ -69,11 +72,8 @@ export function SpendForm() {
   }
 
   const onSubmit = (data: FormValues) => {
-    const results = evaluateSpend({
-      teamSize: data.teamSize,
-      tools: data.tools
-    });
-    console.log("Audit Results:", results);
+    // Form is already saved by watch hook
+    router.push("/results");
   };
 
   return (
