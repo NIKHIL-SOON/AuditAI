@@ -2,8 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { AuditResult } from "./audit-engine";
 
-const supabaseUrl = "https://resjkiyssmrlzcaeiufr.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJlc2praXlzc21ybHpjYWVpdWZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODQzMDM2OCwiZXhwIjoyMDk0MDA2MzY4fQ.5djiaEpRB0U538RsFk0be9HyQnUur4533he3xWb5P2M";
+const supabaseUrl = process.env.SUPABASE_URL || "";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
