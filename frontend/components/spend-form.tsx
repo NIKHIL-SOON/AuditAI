@@ -27,14 +27,45 @@ const PREDEFINED_TOOLS = [
   "Cursor", "Copilot", "Claude", "ChatGPT", "APIs", "Gemini", "Windsurf/v0", "Other"
 ];
 
+import { useLocalStorage } from "@/frontend/hooks/use-local-storage";
+
 export function SpendForm() {
-  const { register, control, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const [isMounted, setIsMounted] = React.useState(false);
+  const [savedData, setSavedData] = useLocalStorage<FormValues | null>("audit-form-state", null);
+
+  const { register, control, handleSubmit, watch, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       teamSize: 1,
       tools: [{ name: "Cursor", tier: "Pro", users: 1, monthlySpend: 20 }]
     }
   });
+
+  React.useEffect(() => {
+    setIsMounted(true);
+    if (savedData) {
+      reset(savedData);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  React.useEffect(() => {
+    const subscription = watch((value) => {
+      if (isMounted) {
+        setSavedData(value as FormValues);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, isMounted, setSavedData]);
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "tools"
+  });
+
+  if (!isMounted) {
+    return null; // Avoid hydration mismatch on initial render
+  }
 
   const { fields, append, remove } = useFieldArray({
     control,
