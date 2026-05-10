@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useLocalStorage } from "@/frontend/hooks/use-local-storage";
 import { evaluateSpend, AuditResult } from "@/backend/api/audit-engine";
-import { getAiSummaryAction } from "@/frontend/app/actions";
+import { getAiSummaryAction, captureLeadAction } from "@/frontend/app/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card";
 import { Button } from "@/frontend/components/ui/button";
+import { Input } from "@/frontend/components/ui/input";
 import { ArrowLeft, TrendingDown } from "lucide-react";
 import Link from "next/link";
 
@@ -13,6 +14,31 @@ export default function ResultsPage() {
   const [savedData] = useLocalStorage<any>("audit-form-state", null);
   const [result, setResult] = useState<AuditResult | null>(null);
   const [summary, setSummary] = useState<string>("Analyzing your AI stack...");
+
+  const [email, setEmail] = useState("");
+  const [honeypot, setHoneypot] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successId, setSuccessId] = useState<string | null>(null);
+
+  const handleCaptureLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!result) return;
+    setIsSubmitting(true);
+    
+    try {
+      const res = await captureLeadAction(email, honeypot, result);
+      if (res.success) {
+        setSuccessId(res.id!);
+      } else {
+        alert(res.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     if (savedData) {
@@ -139,6 +165,39 @@ export default function ResultsPage() {
             </div>
           </div>
         )}
+
+        {/* Lead Capture Form */}
+        <div className="mt-12 bg-white rounded-2xl p-8 text-center shadow-md border border-gray-200">
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">Email me these results</h3>
+          {successId ? (
+            <div className="p-4 bg-green-50 text-green-700 rounded-lg font-medium">
+              ✅ Results sent! Your shareable link ID is: {successId}
+            </div>
+          ) : (
+            <form onSubmit={handleCaptureLead} className="max-w-md mx-auto space-y-4">
+              <input 
+                type="text" 
+                name="honeypot" 
+                value={honeypot} 
+                onChange={(e) => setHoneypot(e.target.value)} 
+                className="hidden" 
+                tabIndex={-1} 
+                autoComplete="off" 
+              />
+              <Input 
+                type="email" 
+                required 
+                placeholder="you@company.com" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                className="w-full text-lg p-6"
+              />
+              <Button type="submit" disabled={isSubmitting} className="w-full text-lg py-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl">
+                {isSubmitting ? "Sending..." : "Send My Audit Report"}
+              </Button>
+            </form>
+          )}
+        </div>
 
       </div>
     </main>
