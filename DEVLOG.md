@@ -18,3 +18,10 @@
 **What I learned:** How to properly sync `react-hook-form`'s dynamic `useFieldArray` with LocalStorage. I made a specific architectural trade-off: to prevent React Hydration mismatches (SSR vs CSR), I implemented an `isMounted` gate in the form component. This trades off an instant initial paint (the form briefly renders null on the server) in exchange for absolute local storage integrity and preventing React tree crashes, which is critical for complex dynamic arrays.
 **Blockers / what I'm stuck on:** None. Data flows perfectly from the client form directly into our deterministic audit algorithm.
 **Plan for tomorrow:** Render the audit engine results visibly on the dashboard using beautifully designed metric cards, and implement the final "Share" features.
+
+## Day 4 — 2026-05-10
+**Hours worked:** 2.5
+**What I did:** Built the high-polish "Results Dashboard" in `/frontend/app/results/page.tsx` displaying the Total Monthly Savings, Annual Projections, and a detailed Breakdown Card map showing the exact optimization action per tool. Implemented the Anthropic API (`claude-3-haiku`) inside `ai-summary.ts` mapped via a Next.js Server Action to generate a personalized 100-word executive summary. Added a conditional high-visibility CTA for the "Credex Consultation" if savings exceed $500/mo.
+**What I learned:** Best practices for integrating server-side API calls with third-party AI models while handling Next.js App Router boundaries.
+**Blockers / what I'm stuck on:** Handling AI API failures (rate limits, missing keys). I resolved this by writing a robust `try/catch` block that traps the error and returns a mathematically-templated, professional summary fallback. The user never sees a crash.
+**Plan for tomorrow:** Final polish, implementation of export/sharing features, and comprehensive QA before submission on Day 5.
