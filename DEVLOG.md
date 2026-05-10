@@ -11,3 +11,10 @@
 **What I learned:** Next.js heavily relies on a local `tsconfig.json` at its project root. We needed a tailored local tsconfig inside `/frontend` to resolve `@/lib` aliases.
 **Blockers / what I'm stuck on:** None. Core logic and workspace are perfectly aligned.
 **Plan for tomorrow:** Build the dynamic frontend React form with react-hook-form and Zod, and wire it up to the backend engine to execute live client-side calculations.
+
+## Day 3 — 2026-05-10
+**Hours worked:** 2
+**What I did:** Built the dynamic "Spend Input Form" using react-hook-form and Zod. Supported all required AI tools. Implemented a custom `useLocalStorage` hook to persist user form state across page reloads. Ensured accessibility (Lighthouse ready) by using proper semantic HTML labels, shadcn components, and ARIA properties. Wired up the form to the backend `audit-engine.ts`, currently logging the mathematical results to the console.
+**What I learned:** How to properly sync `react-hook-form`'s dynamic `useFieldArray` with LocalStorage. I made a specific architectural trade-off: to prevent React Hydration mismatches (SSR vs CSR), I implemented an `isMounted` gate in the form component. This trades off an instant initial paint (the form briefly renders null on the server) in exchange for absolute local storage integrity and preventing React tree crashes, which is critical for complex dynamic arrays.
+**Blockers / what I'm stuck on:** None. Data flows perfectly from the client form directly into our deterministic audit algorithm.
+**Plan for tomorrow:** Render the audit engine results visibly on the dashboard using beautifully designed metric cards, and implement the final "Share" features.
