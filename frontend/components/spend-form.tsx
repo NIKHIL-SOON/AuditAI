@@ -8,6 +8,7 @@ import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/frontend/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
+import { evaluateSpend } from "@/backend/api/audit-engine";
 
 export const toolSchema = z.object({
   name: z.string().min(1, "Tool name is required"),
@@ -67,13 +68,12 @@ export function SpendForm() {
     return null; // Avoid hydration mismatch on initial render
   }
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "tools"
-  });
-
   const onSubmit = (data: FormValues) => {
-    console.log("Audit Results payload:", data);
+    const results = evaluateSpend({
+      teamSize: data.teamSize,
+      tools: data.tools
+    });
+    console.log("Audit Results:", results);
   };
 
   return (
