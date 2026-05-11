@@ -45,6 +45,7 @@ export default function ResultsPage() {
   useEffect(() => {
     if (savedData) {
       const res = evaluateSpend({
+        useCase: savedData.useCase,
         teamSize: savedData.teamSize,
         tools: savedData.tools
       });
@@ -67,6 +68,7 @@ export default function ResultsPage() {
   }
 
   const isOptimal = result.monthlySavings === 0;
+  const isLean = result.monthlySavings < 100;
 
   return (
     <main className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">
@@ -82,7 +84,7 @@ export default function ResultsPage() {
         {/* Hero Section */}
         <div className="text-center space-y-4 mb-12">
           <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
-            Your Audit Results
+            {isLean ? "Your stack is looking lean! 🚀" : "Your Audit Results"}
           </h1>
           {isOptimal ? (
             <div className="mt-8 p-6 bg-green-50 rounded-xl border border-green-200 inline-block">
@@ -205,7 +207,9 @@ export default function ResultsPage() {
             </div>
           ) : (
             <>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Email me these results</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                {isLean ? "Notify me of new optimizations" : "Email me these results"}
+              </h3>
               <form onSubmit={handleCaptureLead} className="max-w-md mx-auto space-y-4">
                 <input 
                   type="text" 
@@ -225,7 +229,7 @@ export default function ResultsPage() {
                   className="w-full text-lg p-6"
                 />
                 <Button type="submit" disabled={isSubmitting} className="w-full text-lg py-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl">
-                  {isSubmitting ? "Sending..." : "Send My Audit Report"}
+                  {isSubmitting ? "Sending..." : (isLean ? "Notify Me" : "Send My Audit Report")}
                 </Button>
               </form>
             </>

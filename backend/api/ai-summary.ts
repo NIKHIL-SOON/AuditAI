@@ -1,7 +1,7 @@
 import { AuditResult } from "./audit-engine";
 
 export async function generateSummary(result: AuditResult): Promise<string> {
-  const prompt = `You are an expert AI software auditor. The user has an AI tool stack that costs $${result.currentMonthlySpend}/mo. We found they can optimize it to $${result.optimizedMonthlySpend}/mo, saving $${result.monthlySavings}/mo ($${result.annualSavings}/year).
+  const prompt = `You are an expert AI software auditor. The user has an AI tool stack that costs $${result.currentMonthlySpend}/mo. We found they can optimize it to $${result.optimizedMonthlySpend}/mo, saving $${result.monthlySavings}/mo ($${result.annualSavings}/year). Their primary use case is ${result.useCase}.
 
 Here are the recommendations:
 ${result.recommendations.map(r => `- ${r.toolName}: ${r.action} (Saves $${r.savings}/mo) - ${r.rationale}`).join('\n')}

@@ -17,6 +17,7 @@ export const toolSchema = z.object({
 });
 
 export const formSchema = z.object({
+  useCase: z.string().min(1, "Use case is required"),
   teamSize: z.number().min(1, "Team size must be at least 1"),
   tools: z.array(toolSchema)
 });
@@ -27,6 +28,41 @@ const PREDEFINED_TOOLS = [
   "Cursor", "Copilot", "Claude", "ChatGPT", "APIs", "Gemini", "Windsurf/v0", "Other"
 ];
 
+const TOOL_TIERS: Record<string, { tier: string, price: number }[]> = {
+  "Cursor": [
+    { tier: "Hobby", price: 0 },
+    { tier: "Pro", price: 20 },
+    { tier: "Business", price: 40 },
+    { tier: "Enterprise", price: 100 }
+  ],
+  "ChatGPT": [
+    { tier: "Plus", price: 20 },
+    { tier: "Team", price: 30 },
+    { tier: "Enterprise", price: 0 }
+  ],
+  "Gemini": [
+    { tier: "Pro", price: 0 },
+    { tier: "Ultra", price: 20 },
+    { tier: "Business", price: 0 }
+  ],
+  "Claude": [
+    { tier: "Free", price: 0 },
+    { tier: "Pro", price: 20 },
+    { tier: "Team", price: 30 },
+    { tier: "Enterprise", price: 0 }
+  ],
+  "Copilot": [
+    { tier: "Individual", price: 10 },
+    { tier: "Business", price: 19 },
+    { tier: "Enterprise", price: 39 }
+  ],
+  "Windsurf/v0": [
+    { tier: "Free", price: 0 },
+    { tier: "Pro", price: 15 },
+    { tier: "Team", price: 25 }
+  ]
+};
+
 import { useLocalStorage } from "@/frontend/hooks/use-local-storage";
 import { useRouter } from "next/navigation";
 
@@ -36,9 +72,10 @@ export function SpendForm() {
 
   const [savedData, setSavedData] = useLocalStorage<FormValues | null>("audit-form-state", null);
 
-  const { register, control, handleSubmit, watch, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, control, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      useCase: "Mixed",
       teamSize: 1,
       tools: [{ name: "Cursor", tier: "Pro", users: 1, monthlySpend: 20 }]
     }
@@ -84,18 +121,39 @@ export function SpendForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" id="spend-form">
-          {/* Team Size */}
-          <div className="space-y-2">
-            <label htmlFor="teamSize" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Total Team Size
-            </label>
-            <Input 
-              id="teamSize"
-              type="number" 
-              {...register("teamSize", { valueAsNumber: true })} 
-              aria-invalid={!!errors.teamSize}
-            />
-            {errors.teamSize && <p className="text-sm text-red-500" role="alert">{errors.teamSize.message}</p>}
+          {/* Use Case & Team Size */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="useCase" className="text-sm font-medium leading-none">
+                Primary Use Case
+              </label>
+              <select
+                id="useCase"
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                {...register("useCase")}
+                aria-invalid={!!errors.useCase}
+              >
+                <option value="Coding">Coding</option>
+                <option value="Writing">Writing</option>
+                <option value="Data Science">Data Science</option>
+                <option value="Research">Research</option>
+                <option value="Mixed">Mixed</option>
+              </select>
+              {errors.useCase && <p className="text-sm text-red-500" role="alert">{errors.useCase.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="teamSize" className="text-sm font-medium leading-none">
+                Total Team Size
+              </label>
+              <Input 
+                id="teamSize"
+                type="number" 
+                {...register("teamSize", { valueAsNumber: true })} 
+                aria-invalid={!!errors.teamSize}
+              />
+              {errors.teamSize && <p className="text-sm text-red-500" role="alert">{errors.teamSize.message}</p>}
+            </div>
           </div>
 
           {/* Tools */}
@@ -110,7 +168,17 @@ export function SpendForm() {
                       <select
                         id={`tools.${index}.name`}
                         className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        {...register(`tools.${index}.name` as const)}
+                        {...register(`tools.${index}.name` as const, {
+                          onChange: (e) => {
+                            const newTool = e.target.value;
+                            const tiers = TOOL_TIERS[newTool];
+                            if (tiers && tiers.length > 0) {
+                              const defaultTier = tiers[0];
+                              setValue(`tools.${index}.tier`, defaultTier.tier);
+                              setValue(`tools.${index}.monthlySpend`, defaultTier.price);
+                            }
+                          }
+                        })}
                       >
                         {PREDEFINED_TOOLS.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
@@ -119,11 +187,32 @@ export function SpendForm() {
 
                     <div className="space-y-2">
                       <label htmlFor={`tools.${index}.tier`} className="text-sm font-medium">Plan Tier</label>
-                      <Input 
-                        id={`tools.${index}.tier`}
-                        placeholder="e.g. Pro, Business"
-                        {...register(`tools.${index}.tier` as const)}
-                      />
+                      {TOOL_TIERS[watch(`tools.${index}.name`)] ? (
+                        <select
+                          id={`tools.${index}.tier`}
+                          className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...register(`tools.${index}.tier` as const, {
+                            onChange: (e) => {
+                              const selectedTierName = e.target.value;
+                              const toolName = watch(`tools.${index}.name`);
+                              const tierInfo = TOOL_TIERS[toolName]?.find(t => t.tier === selectedTierName);
+                              if (tierInfo) {
+                                setValue(`tools.${index}.monthlySpend`, tierInfo.price);
+                              }
+                            }
+                          })}
+                        >
+                          {TOOL_TIERS[watch(`tools.${index}.name`)].map(t => (
+                            <option key={t.tier} value={t.tier}>{t.tier}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Input 
+                          id={`tools.${index}.tier`}
+                          placeholder="e.g. Pro, Business"
+                          {...register(`tools.${index}.tier` as const)}
+                        />
+                      )}
                       {errors.tools?.[index]?.tier && <p className="text-sm text-red-500" role="alert">{errors.tools[index]?.tier?.message}</p>}
                     </div>
 

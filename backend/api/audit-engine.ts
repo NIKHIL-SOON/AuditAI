@@ -6,6 +6,7 @@ export interface UserTool {
 }
 
 export interface AuditContext {
+  useCase: string;
   teamSize: number;
   tools: UserTool[];
 }
@@ -18,6 +19,7 @@ export interface Recommendation {
 }
 
 export interface AuditResult {
+  useCase: string;
   teamSize: number;
   currentMonthlySpend: number;
   optimizedMonthlySpend: number;
@@ -110,6 +112,7 @@ export function evaluateSpend(context: AuditContext): AuditResult {
   const monthlySavings = currentMonthlySpend - optimizedMonthlySpend;
 
   return {
+    useCase: context.useCase,
     teamSize: context.teamSize,
     currentMonthlySpend,
     optimizedMonthlySpend,
