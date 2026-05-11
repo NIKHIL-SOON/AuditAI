@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
+import { Recommendation } from '@/backend/api/audit-engine';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '';
@@ -82,7 +84,7 @@ export default async function SharePage({ params }: Props) {
         <div className="space-y-6 pt-6">
           <h3 className="text-2xl font-bold text-gray-900 text-center">Recommended Actions</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {auditData.recommendations.map((rec: any, idx: number) => {
+            {auditData.recommendations.map((rec: Recommendation, idx: number) => {
               const isSavings = rec.savings > 0;
               return (
                 <div key={idx} className={`rounded-xl p-6 shadow-sm border-l-4 ${isSavings ? 'border-l-green-500 bg-white' : 'border-l-gray-300 bg-gray-50'}`}>
@@ -110,9 +112,9 @@ export default async function SharePage({ params }: Props) {
         <div className="mt-12 bg-white rounded-2xl p-8 text-center shadow-md border border-gray-200">
           <h3 className="text-2xl font-bold text-gray-900 mb-4">Want to check your own AI spend?</h3>
           <p className="text-gray-600 mb-6">See if your team is wasting money on redundant or unused AI subscriptions.</p>
-          <a href="/" className="inline-block px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors">
+          <Link href="/" className="inline-block px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors">
             Run a Free Audit
-          </a>
+          </Link>
         </div>
 
       </div>
