@@ -44,27 +44,27 @@ export function evaluateSpend(context: AuditContext): AuditResult {
 
   // 1. Evaluate Coding Assistants
   if (cursor && copilot) {
-    const overlapUsers = Math.min(cursor.users, copilot.users);
     const costPerUser = copilot.monthlySpend / copilot.users;
-    const savings = overlapUsers * costPerUser;
+    const savings = costPerUser * context.teamSize;
     recommendations.push({
       toolName: 'GitHub Copilot',
       action: 'CONSOLIDATE',
       savings: savings,
-      rationale: `You are paying for redundant coding assistants. Dropping Copilot for ${overlapUsers} overlapping Cursor users saves $${costPerUser.toFixed(0)}/user/mo. For your team, that is a $${savings.toFixed(0)}/mo reduction.`
+      rationale: `Dropping GitHub Copilot ($${costPerUser.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
     });
     totalSavings += savings;
   } else if (copilot) {
     if (copilot.tier.toLowerCase() === 'enterprise' && context.teamSize <= 10) {
-      const recommendedCost = copilot.users * 19;
-      if (copilot.monthlySpend > recommendedCost) {
-        const savings = copilot.monthlySpend - recommendedCost;
-        const costDiff = (copilot.monthlySpend - recommendedCost) / copilot.users;
+      const costPerUser = copilot.monthlySpend / copilot.users;
+      const recommendedCost = 19;
+      const costDiff = costPerUser - recommendedCost;
+      if (costDiff > 0) {
+        const savings = costDiff * context.teamSize;
         recommendations.push({
           toolName: 'GitHub Copilot',
           action: 'DOWNGRADE',
           savings: savings,
-          rationale: `Switching from Enterprise to Business saves $${costDiff.toFixed(0)}/user/mo. For your team of ${copilot.users}, that is a $${savings.toFixed(0)}/mo reduction without loss of core features.`
+          rationale: `Downgrading GitHub Copilot ($${costDiff.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
         });
         totalSavings += savings;
       }
@@ -73,15 +73,16 @@ export function evaluateSpend(context: AuditContext): AuditResult {
 
   if (cursor) {
     if ((cursor.tier.toLowerCase() === 'business' || cursor.tier.toLowerCase() === 'enterprise') && context.teamSize <= 10) {
-      const recommendedCost = cursor.users * 20;
-      if (cursor.monthlySpend > recommendedCost) {
-        const savings = cursor.monthlySpend - recommendedCost;
-        const costDiff = (cursor.monthlySpend - recommendedCost) / cursor.users;
+      const costPerUser = cursor.monthlySpend / cursor.users;
+      const recommendedCost = 20;
+      const costDiff = costPerUser - recommendedCost;
+      if (costDiff > 0) {
+        const savings = costDiff * context.teamSize;
         recommendations.push({
           toolName: 'Cursor',
           action: 'DOWNGRADE',
           savings: savings,
-          rationale: `Switching from ${cursor.tier} to Pro saves $${costDiff.toFixed(0)}/user/mo. For your team of ${cursor.users}, that is a $${savings.toFixed(0)}/mo reduction without loss of core features.`
+          rationale: `Downgrading Cursor ($${costDiff.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
         });
         totalSavings += savings;
       }
@@ -90,29 +91,29 @@ export function evaluateSpend(context: AuditContext): AuditResult {
 
   // 2. Evaluate Chatbots
   if (chatgpt && claude) {
-    const overlapUsers = Math.min(chatgpt.users, claude.users);
     const costPerUser = claude.monthlySpend / claude.users;
-    const savings = overlapUsers * costPerUser;
+    const savings = costPerUser * context.teamSize;
     recommendations.push({
-      toolName: 'Multiple Chatbots',
+      toolName: 'Claude',
       action: 'CONSOLIDATE',
       savings: savings,
-      rationale: `You are paying for redundant chatbots. Consolidating ChatGPT and Claude saves $${costPerUser.toFixed(0)}/user/mo. For ${overlapUsers} overlapping users, that is a $${savings.toFixed(0)}/mo reduction.`
+      rationale: `Dropping Claude ($${costPerUser.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
     });
     totalSavings += savings;
   }
 
   if (chatgpt) {
     if (chatgpt.tier.toLowerCase() === 'enterprise' && context.teamSize <= 10) {
-      const recommendedCost = chatgpt.users * 30;
-      if (chatgpt.monthlySpend > recommendedCost) {
-        const savings = chatgpt.monthlySpend - recommendedCost;
-        const costDiff = (chatgpt.monthlySpend - recommendedCost) / chatgpt.users;
+      const costPerUser = chatgpt.monthlySpend / chatgpt.users;
+      const recommendedCost = 30;
+      const costDiff = costPerUser - recommendedCost;
+      if (costDiff > 0) {
+        const savings = costDiff * context.teamSize;
         recommendations.push({
           toolName: 'ChatGPT',
           action: 'DOWNGRADE',
           savings: savings,
-          rationale: `Switching from Enterprise to Team saves $${costDiff.toFixed(0)}/user/mo. For your team of ${chatgpt.users}, that is a $${savings.toFixed(0)}/mo reduction without loss of core features.`
+          rationale: `Downgrading ChatGPT ($${costDiff.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
         });
         totalSavings += savings;
       }
@@ -127,15 +128,14 @@ export function evaluateSpend(context: AuditContext): AuditResult {
     if (activeChatbot && activeCodingAssist) {
       const primaryChatbot = chatgpt || claude || gemini;
       if (primaryChatbot) {
-        const overlapUsers = Math.min(primaryChatbot.users, activeCodingAssist.users);
         const costPerUser = primaryChatbot.monthlySpend / primaryChatbot.users;
-        const savings = overlapUsers * costPerUser;
+        const savings = costPerUser * context.teamSize;
         
         recommendations.push({
           toolName: primaryChatbot.name,
           action: 'CONSOLIDATE',
           savings: savings,
-          rationale: `Since your primary use case is Coding, paying for a general chatbot PLUS a coding assistant is redundant. Dropping ${primaryChatbot.name} saves $${costPerUser.toFixed(0)}/user/mo. For your team of ${overlapUsers}, that is a $${savings.toFixed(0)}/mo reduction. Stick to your integrated coding assistant.`
+          rationale: `Dropping ${primaryChatbot.name} ($${costPerUser.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
         });
         totalSavings += savings;
       }
@@ -149,8 +149,8 @@ export function evaluateSpend(context: AuditContext): AuditResult {
     teamSize: context.teamSize,
     currentMonthlySpend,
     optimizedMonthlySpend,
-    monthlySavings: currentMonthlySpend - optimizedMonthlySpend,
-    annualSavings: (currentMonthlySpend - optimizedMonthlySpend) * 12,
+    monthlySavings: totalSavings,
+    annualSavings: totalSavings * 12,
     recommendations
   };
 }
