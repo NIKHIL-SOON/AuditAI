@@ -18,6 +18,7 @@ export interface Recommendation {
 }
 
 export interface AuditResult {
+  teamSize: number;
   currentMonthlySpend: number;
   optimizedMonthlySpend: number;
   monthlySavings: number;
@@ -44,7 +45,7 @@ export function evaluateSpend(context: AuditContext): AuditResult {
       toolName: 'GitHub Copilot',
       action: 'CONSOLIDATE',
       savings: savings,
-      rationale: `You are paying for both Cursor and Copilot. Cursor includes a powerful AI autocomplete model. Dropping Copilot for ${overlapUsers} overlapping users saves $${savings}/mo without losing capabilities.`
+      rationale: `You are currently paying for 'Ghost Seats'. By dropping Copilot for ${overlapUsers} overlapping Cursor users, you stop a $${savings * 12}/year leak. Eliminate waste and reclaim this budget.`
     });
     currentMonthlySpend += copilot.monthlySpend;
     optimizedMonthlySpend += (copilot.monthlySpend - savings);
@@ -61,7 +62,7 @@ export function evaluateSpend(context: AuditContext): AuditResult {
         toolName: 'Cursor',
         action: 'DOWNGRADE',
         savings: savings,
-        rationale: `Cursor Business is best for larger teams requiring centralized billing & privacy controls. Since you only have ${cursor.users} users, downgrading to Pro saves $20/user/mo.`
+        rationale: `You are currently paying for 'Ghost Seats' on an enterprise tier you don't need. Downgrading to Pro stops a $${savings * 12}/year leak. Reclaim budget without losing capabilities.`
       });
       currentMonthlySpend += cursor.monthlySpend;
       optimizedMonthlySpend += (cursor.monthlySpend - savings);
@@ -82,7 +83,7 @@ export function evaluateSpend(context: AuditContext): AuditResult {
       toolName: 'Multiple Chatbots',
       action: 'CONSOLIDATE',
       savings: savings,
-      rationale: `Paying for both ChatGPT and Claude for the exact same users is redundant. Standardizing on one platform saves $20/user/mo.`
+      rationale: `You are currently paying for 'Ghost Seats'. By consolidating ChatGPT and Claude, you stop a $${savings * 12}/year leak that adds zero value to your team. Redirect this capital into growth, not redundant subscriptions.`
     });
     currentMonthlySpend += chatgpt.monthlySpend + claude.monthlySpend;
     optimizedMonthlySpend += (chatgpt.monthlySpend + claude.monthlySpend - savings);
@@ -109,6 +110,7 @@ export function evaluateSpend(context: AuditContext): AuditResult {
   const monthlySavings = currentMonthlySpend - optimizedMonthlySpend;
 
   return {
+    teamSize: context.teamSize,
     currentMonthlySpend,
     optimizedMonthlySpend,
     monthlySavings,

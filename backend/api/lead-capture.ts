@@ -32,13 +32,17 @@ export async function captureLead(email: string, honeypot: string, auditData: Au
   }
 
   // 2. Insert into Supabase
+  const isHighValue = auditData.monthlySavings > 500;
   const { data, error } = await supabase
     .from("audit_leads")
     .insert([
       {
         email: email,
         audit_data: auditData as any,
-        monthly_savings: auditData.monthlySavings
+        monthly_savings: auditData.monthlySavings,
+        annual_savings: auditData.annualSavings,
+        team_size: auditData.teamSize,
+        is_high_value: isHighValue
       }
     ])
     .select("id")

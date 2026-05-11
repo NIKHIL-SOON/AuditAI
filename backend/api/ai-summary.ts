@@ -11,8 +11,8 @@ Write a concise, professional ~100-word executive summary of these findings, hig
   try {
     const apiKey = process.env.ANTHROPIC_API_KEY || process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
     if (!apiKey) {
-      console.warn("ANTHROPIC_API_KEY not found. Using fallback summary.");
-      throw new Error("Missing API key");
+      console.log("[Info] Using local summary engine");
+      return getFallbackSummary(result);
     }
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -39,10 +39,14 @@ Write a concise, professional ~100-word executive summary of these findings, hig
     return data.content[0].text;
   } catch (error) {
     console.error("AI Summary generation failed, falling back to templated response:", error);
-    if (result.monthlySavings > 0) {
-      return `Based on our audit, your team is currently spending $${result.currentMonthlySpend}/mo on AI tools. By optimizing overlapping subscriptions and right-sizing team seats, you can reduce this to $${result.optimizedMonthlySpend}/mo. This generates a total savings of $${result.monthlySavings}/mo ($${result.annualSavings}/year). Review the specific downgrade and cancellation recommendations below to achieve this leaner, more efficient AI tool stack immediately.`;
-    } else {
-      return `Great news! Based on our audit, your team's AI tool spend of $${result.currentMonthlySpend}/mo is fully optimized. We did not find any redundant subscriptions or wasted seats. Keep up the excellent work managing your software stack efficiently.`;
-    }
+    return getFallbackSummary(result);
+  }
+}
+
+function getFallbackSummary(result: AuditResult): string {
+  if (result.monthlySavings > 0) {
+    return `Based on our audit, your team is currently spending $${result.currentMonthlySpend}/mo on AI tools. By optimizing overlapping subscriptions and right-sizing team seats, you can reduce this to $${result.optimizedMonthlySpend}/mo. This generates a total savings of $${result.monthlySavings}/mo ($${result.annualSavings}/year). Review the specific downgrade and cancellation recommendations below to achieve this leaner, more efficient AI tool stack immediately.`;
+  } else {
+    return `Great news! Based on our audit, your team's AI tool spend of $${result.currentMonthlySpend}/mo is fully optimized. We did not find any redundant subscriptions or wasted seats. Keep up the excellent work managing your software stack efficiently.`;
   }
 }

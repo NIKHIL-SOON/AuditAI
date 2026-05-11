@@ -7,7 +7,7 @@ import { getAiSummaryAction, captureLeadAction } from "@/frontend/app/actions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/frontend/components/ui/card";
 import { Button } from "@/frontend/components/ui/button";
 import { Input } from "@/frontend/components/ui/input";
-import { ArrowLeft, TrendingDown } from "lucide-react";
+import { ArrowLeft, TrendingDown, Check, Copy } from "lucide-react";
 import Link from "next/link";
 import { FormValues } from "@/frontend/components/spend-form";
 
@@ -20,7 +20,7 @@ export default function ResultsPage() {
   const [honeypot, setHoneypot] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successId, setSuccessId] = useState<string | null>(null);
-
+  const [isCopied, setIsCopied] = useState(false);
   const handleCaptureLead = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!result) return;
@@ -184,11 +184,22 @@ export default function ResultsPage() {
                 <Button 
                   onClick={() => {
                     navigator.clipboard.writeText(`${window.location.origin}/share/${successId}`);
-                    alert('Link copied to clipboard!');
+                    setIsCopied(true);
+                    setTimeout(() => setIsCopied(false), 2000);
                   }}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all"
                 >
-                  Copy Link
+                  {isCopied ? (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy Link
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
