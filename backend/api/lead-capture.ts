@@ -3,11 +3,12 @@ import { Resend } from "resend";
 import { AuditResult } from "./audit-engine";
 
 function getSupabaseClient() {
-  const supabaseUrl = process.env.SUPABASE_URL || "";
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || "";
   
   if (!supabaseUrl || !supabaseKey) {
-    console.warn("Supabase credentials missing in environment variables");
+    console.error("Supabase credentials missing in environment variables");
+    return null;
   }
   
   return createClient(supabaseUrl, supabaseKey);
@@ -18,6 +19,9 @@ const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy");
 
 export async function captureLead(email: string, honeypot: string, auditData: AuditResult) {
   const supabase = getSupabaseClient();
+  if (!supabase) {
+    return { success: false, error: "Configuration missing" };
+  }
   console.log(`[Server] Attempting to save lead for: ${email}`);
 
   // 1. Honeypot check

@@ -9,7 +9,7 @@ ${result.recommendations.map(r => `- ${r.toolName}: ${r.action} (Saves $${r.savi
 Write a concise, professional ~100-word executive summary of these findings, highlighting the biggest wins. Be direct, encouraging, and do not use generic AI buzzwords.`;
 
   try {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
     if (!apiKey) {
       console.warn("ANTHROPIC_API_KEY not found. Using fallback summary.");
       throw new Error("Missing API key");
