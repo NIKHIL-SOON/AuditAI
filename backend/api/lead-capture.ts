@@ -2,15 +2,24 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { AuditResult } from "./audit-engine";
 
-const supabaseUrl = process.env.SUPABASE_URL || "";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-console.log("[System Check] Supabase URL exists:", !!process.env.SUPABASE_URL);
+function getSupabaseClient() {
+  const supabaseUrl = process.env.SUPABASE_URL || "";
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn("Supabase credentials missing in environment variables");
+  }
+  
+  return createClient(supabaseUrl, supabaseKey);
+}
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy");
 
 export async function captureLead(email: string, honeypot: string, auditData: AuditResult) {
+  const supabase = getSupabaseClient();
+  console.log(`[Server] Attempting to save lead for: ${email}`);
+
   // 1. Honeypot check
   if (honeypot && honeypot.length > 0) {
     console.warn("Bot detected via honeypot field");
@@ -62,5 +71,5 @@ export async function captureLead(email: string, honeypot: string, auditData: Au
     console.error("Failed to send email:", emailError);
   }
 
-  return { success: true, id: leadId };
+  return { success: true, id: data.id };
 }

@@ -30,6 +30,7 @@ export default function ResultsPage() {
       const res = await captureLeadAction(email, honeypot, result);
       if (res.success) {
         setSuccessId(res.id!);
+        console.log("Lead saved successfully:", res.id);
       } else {
         alert(res.error);
       }
