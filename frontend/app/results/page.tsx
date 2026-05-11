@@ -171,34 +171,53 @@ export default function ResultsPage() {
 
         {/* Lead Capture Form */}
         <div className="mt-12 bg-white rounded-2xl p-8 text-center shadow-md border border-gray-200">
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">Email me these results</h3>
           {successId ? (
-            <div className="p-4 bg-green-50 text-green-700 rounded-lg font-medium">
-              ✅ Results sent! Your shareable link ID is: {successId}
+            <div className="space-y-4">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Share your Audit</h3>
+              <p className="text-gray-600 mb-6">Your results have been saved securely. Share this public link with your team:</p>
+              <div className="flex items-center gap-2 max-w-md mx-auto">
+                <Input 
+                  readOnly 
+                  value={`${typeof window !== 'undefined' ? window.location.origin : ''}/share/${successId}`} 
+                  className="w-full text-base bg-gray-50 text-gray-700"
+                />
+                <Button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/share/${successId}`);
+                    alert('Link copied to clipboard!');
+                  }}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                >
+                  Copy Link
+                </Button>
+              </div>
             </div>
           ) : (
-            <form onSubmit={handleCaptureLead} className="max-w-md mx-auto space-y-4">
-              <input 
-                type="text" 
-                name="honeypot" 
-                value={honeypot} 
-                onChange={(e) => setHoneypot(e.target.value)} 
-                className="hidden" 
-                tabIndex={-1} 
-                autoComplete="off" 
-              />
-              <Input 
-                type="email" 
-                required 
-                placeholder="you@company.com" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                className="w-full text-lg p-6"
-              />
-              <Button type="submit" disabled={isSubmitting} className="w-full text-lg py-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl">
-                {isSubmitting ? "Sending..." : "Send My Audit Report"}
-              </Button>
-            </form>
+            <>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Email me these results</h3>
+              <form onSubmit={handleCaptureLead} className="max-w-md mx-auto space-y-4">
+                <input 
+                  type="text" 
+                  name="honeypot" 
+                  value={honeypot} 
+                  onChange={(e) => setHoneypot(e.target.value)} 
+                  className="hidden" 
+                  tabIndex={-1} 
+                  autoComplete="off" 
+                />
+                <Input 
+                  type="email" 
+                  required 
+                  placeholder="you@company.com" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  className="w-full text-lg p-6"
+                />
+                <Button type="submit" disabled={isSubmitting} className="w-full text-lg py-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl">
+                  {isSubmitting ? "Sending..." : "Send My Audit Report"}
+                </Button>
+              </form>
+            </>
           )}
         </div>
 

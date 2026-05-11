@@ -11,6 +11,7 @@ function getSupabaseClient() {
     return null;
   }
   
+  console.log("[Success] Database connection established.");
   return createClient(supabaseUrl, supabaseKey);
 }
 
