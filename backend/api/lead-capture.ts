@@ -4,6 +4,7 @@ import { AuditResult } from "./audit-engine";
 
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+console.log("[System Check] Supabase URL exists:", !!process.env.SUPABASE_URL);
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
