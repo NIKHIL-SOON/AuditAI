@@ -1,7 +1,7 @@
 # Unit Economics of a Credex Lead
 
 ## The Value of an Audit
-The AI Spend Audit tool serves as an automated top-of-funnel lead generator for Credex's enterprise services. 
+The AI Spend Audit tool serves as an automated top-of-funnel lead generator for Credex's enterprise services.
 
 ## Lead Qualification
 - **Low Value (<$100/mo savings):** "Lean stack." These users receive an automated report and are added to a nurturing sequence. (Cost to serve: Near $0).
