@@ -1,6 +1,6 @@
 # AI Spend Audit
 
-A free web app for startups to audit their AI tool spending and discover cost-saving opportunities. By inputting current subscriptions, teams get an instant breakdown of where they are overspending and actionable recommendations for switching plans or tools.
+A free web app for startups to audit their AI tool spending and discover cost-saving opportunities. By inputting current subscriptions, teams get an instant breakdown of where they are overspending and actionable recommendations for switching plans or tools. The tool serves as an automated top-of-funnel lead generator for Credex enterprise services.
 
 ## Quick Start
 1. Clone the repository
@@ -19,7 +19,7 @@ A free web app for startups to audit their AI tool spending and discover cost-sa
 5. **LLM Summary**: Using Anthropic's Claude 3 API for its superior nuance in generating human-like, empathetic summaries of financial data.
 
 ## Deployed URL
-*(To be added upon deployment)*
+[https://auditai.vercel.app](https://auditai.vercel.app) (Replace with your actual Vercel/Netlify deployment URL)
 
 ## Project Structure
 We utilize a strict separation of concerns via an npm workspace monorepo:
