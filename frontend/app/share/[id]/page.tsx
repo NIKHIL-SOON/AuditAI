@@ -50,7 +50,7 @@ export default async function SharePage({ params }: Props) {
   }
 
   const auditData = data.audit_data;
-  const isOptimal = auditData.monthlySavings === 0;
+  const isOptimal = auditData.recommendations.length === 0;
 
   return (
     <main className="min-h-screen bg-gray-50/50 py-12 px-4 sm:px-6 lg:px-8">

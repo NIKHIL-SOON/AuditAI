@@ -67,7 +67,7 @@ export default function ResultsPage() {
     );
   }
 
-  const isOptimal = result.monthlySavings === 0;
+  const isOptimal = result.recommendations.length === 0;
   const isLean = result.monthlySavings < 100;
 
   return (
