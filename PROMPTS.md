@@ -37,7 +37,7 @@ End with a gentle nudge that Credex can help them unlock even deeper savings on 
 \`\`\`
 
 ## Why I wrote it this way:
-1. **Strict adherence to provided data**: LLMs are notorious for hallucinating financial data. By supplying the exact calculated numbers and explicitly forbidding it from inventing new ones, we ensure the summary matches the UI.
+1. **Preventing Financial Hallucinations**: To prevent the AI from hallucinating incorrect prices, non-existent tiers, or phantom savings, we pass the mathematically validated numbers from our deterministic engine directly into the prompt variables (e.g., `${currentSpend}`). The engine is the single source of truth, and the AI is explicitly commanded to "not invent new numbers or savings." This enforces a strict boundary: the AI handles narrative presentation, while the TypeScript engine handles the math.
 2. **Tone setting**: Emphasizes empathy. Founders often feel guilty about "wasted" money; the tone must be advisory, not scolding.
 3. **Dynamic Call-to-Action**: It conditionally includes the Credex pitch only if it makes sense contextually.
 
