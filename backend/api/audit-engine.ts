@@ -30,7 +30,7 @@ export interface AuditResult {
 }
 
 export function evaluateSpend(context: AuditContext): AuditResult {
-  const currentMonthlySpend = context.tools.reduce((sum, t) => sum + t.monthlySpend, 0);
+  const currentMonthlySpend = Math.round(context.tools.reduce((sum, t) => sum + t.monthlySpend, 0) * 100) / 100;
   let totalSavings = 0;
   const recommendations: Recommendation[] = [];
 
@@ -42,29 +42,31 @@ export function evaluateSpend(context: AuditContext): AuditResult {
   const claude = toolMap.get('claude');
   const gemini = toolMap.get('gemini');
 
+  const roundCurrency = (val: number) => Math.round(val * 100) / 100;
+
   // 1. Evaluate Coding Assistants
   if (cursor && copilot) {
-    const costPerUser = copilot.monthlySpend / copilot.users;
-    const savings = costPerUser * context.teamSize;
+    const costPerUser = roundCurrency(copilot.monthlySpend / copilot.users);
+    const savings = roundCurrency(costPerUser * context.teamSize);
     recommendations.push({
       toolName: 'GitHub Copilot',
       action: 'CONSOLIDATE',
       savings: savings,
-      rationale: `Dropping GitHub Copilot ($${costPerUser.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
+      rationale: `Dropping GitHub Copilot ($${costPerUser}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
     });
     totalSavings += savings;
   } else if (copilot) {
     if (copilot.tier.toLowerCase() === 'enterprise' && context.teamSize <= 10) {
-      const costPerUser = copilot.monthlySpend / copilot.users;
+      const costPerUser = roundCurrency(copilot.monthlySpend / copilot.users);
       const recommendedCost = 19;
-      const costDiff = costPerUser - recommendedCost;
+      const costDiff = roundCurrency(costPerUser - recommendedCost);
       if (costDiff > 0) {
-        const savings = costDiff * context.teamSize;
+        const savings = roundCurrency(costDiff * context.teamSize);
         recommendations.push({
           toolName: 'GitHub Copilot',
           action: 'DOWNGRADE',
           savings: savings,
-          rationale: `Downgrading GitHub Copilot ($${costDiff.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
+          rationale: `Downgrading GitHub Copilot ($${costDiff}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
         });
         totalSavings += savings;
       }
@@ -73,16 +75,16 @@ export function evaluateSpend(context: AuditContext): AuditResult {
 
   if (cursor) {
     if ((cursor.tier.toLowerCase() === 'business' || cursor.tier.toLowerCase() === 'enterprise') && context.teamSize <= 10) {
-      const costPerUser = cursor.monthlySpend / cursor.users;
+      const costPerUser = roundCurrency(cursor.monthlySpend / cursor.users);
       const recommendedCost = 20;
-      const costDiff = costPerUser - recommendedCost;
+      const costDiff = roundCurrency(costPerUser - recommendedCost);
       if (costDiff > 0) {
-        const savings = costDiff * context.teamSize;
+        const savings = roundCurrency(costDiff * context.teamSize);
         recommendations.push({
           toolName: 'Cursor',
           action: 'DOWNGRADE',
           savings: savings,
-          rationale: `Downgrading Cursor ($${costDiff.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
+          rationale: `Downgrading Cursor ($${costDiff}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
         });
         totalSavings += savings;
       }
@@ -91,29 +93,29 @@ export function evaluateSpend(context: AuditContext): AuditResult {
 
   // 2. Evaluate Chatbots
   if (chatgpt && claude) {
-    const costPerUser = claude.monthlySpend / claude.users;
-    const savings = costPerUser * context.teamSize;
+    const costPerUser = roundCurrency(claude.monthlySpend / claude.users);
+    const savings = roundCurrency(costPerUser * context.teamSize);
     recommendations.push({
       toolName: 'Claude',
       action: 'CONSOLIDATE',
       savings: savings,
-      rationale: `Dropping Claude ($${costPerUser.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
+      rationale: `Dropping Claude ($${costPerUser}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
     });
     totalSavings += savings;
   }
 
   if (chatgpt) {
     if (chatgpt.tier.toLowerCase() === 'enterprise' && context.teamSize <= 10) {
-      const costPerUser = chatgpt.monthlySpend / chatgpt.users;
+      const costPerUser = roundCurrency(chatgpt.monthlySpend / chatgpt.users);
       const recommendedCost = 30;
-      const costDiff = costPerUser - recommendedCost;
+      const costDiff = roundCurrency(costPerUser - recommendedCost);
       if (costDiff > 0) {
-        const savings = costDiff * context.teamSize;
+        const savings = roundCurrency(costDiff * context.teamSize);
         recommendations.push({
           toolName: 'ChatGPT',
           action: 'DOWNGRADE',
           savings: savings,
-          rationale: `Downgrading ChatGPT ($${costDiff.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
+          rationale: `Downgrading ChatGPT ($${costDiff}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
         });
         totalSavings += savings;
       }
@@ -128,21 +130,22 @@ export function evaluateSpend(context: AuditContext): AuditResult {
     if (activeChatbot && activeCodingAssist) {
       const primaryChatbot = chatgpt || claude || gemini;
       if (primaryChatbot) {
-        const costPerUser = primaryChatbot.monthlySpend / primaryChatbot.users;
-        const savings = costPerUser * context.teamSize;
+        const costPerUser = roundCurrency(primaryChatbot.monthlySpend / primaryChatbot.users);
+        const savings = roundCurrency(costPerUser * context.teamSize);
         
         recommendations.push({
           toolName: primaryChatbot.name,
           action: 'CONSOLIDATE',
           savings: savings,
-          rationale: `Dropping ${primaryChatbot.name} ($${costPerUser.toFixed(0)}/user) for your team of ${context.teamSize} saves $${savings.toFixed(0)}/mo.`
+          rationale: `Dropping ${primaryChatbot.name} ($${costPerUser}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
         });
         totalSavings += savings;
       }
     }
   }
 
-  const optimizedMonthlySpend = Math.max(0, currentMonthlySpend - totalSavings);
+  totalSavings = roundCurrency(totalSavings);
+  const optimizedMonthlySpend = roundCurrency(Math.max(0, currentMonthlySpend - totalSavings));
 
   return {
     useCase: context.useCase,
@@ -150,7 +153,7 @@ export function evaluateSpend(context: AuditContext): AuditResult {
     currentMonthlySpend,
     optimizedMonthlySpend,
     monthlySavings: totalSavings,
-    annualSavings: totalSavings * 12,
+    annualSavings: roundCurrency(totalSavings * 12),
     recommendations
   };
 }
