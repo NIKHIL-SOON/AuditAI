@@ -1,5 +1,6 @@
 export interface UserTool {
   name: string;
+  category?: string;
   tier: string;
   users: number;
   monthlySpend: number;
@@ -91,8 +92,26 @@ export function evaluateSpend(context: AuditContext): AuditResult {
     optimizedMonthlySpend += (chatgpt.monthlySpend + claude.monthlySpend - savings);
   } else {
     if (chatgpt) {
-      currentMonthlySpend += chatgpt.monthlySpend;
-      optimizedMonthlySpend += chatgpt.monthlySpend;
+      if (chatgpt.tier.toLowerCase() === 'enterprise' && chatgpt.users <= 5) {
+        const recommendedCost = chatgpt.users * 30; // Team plan cost
+        const savings = chatgpt.monthlySpend > recommendedCost ? chatgpt.monthlySpend - recommendedCost : 0;
+        if (savings > 0) {
+          recommendations.push({
+            toolName: 'ChatGPT',
+            action: 'DOWNGRADE',
+            savings: savings,
+            rationale: `You have ${chatgpt.users} users on an Enterprise plan. Switching to the Business Team plan ($30/user) provides a better usage-fit and stops a $${savings * 12}/year leak.`
+          });
+          currentMonthlySpend += chatgpt.monthlySpend;
+          optimizedMonthlySpend += (chatgpt.monthlySpend - savings);
+        } else {
+          currentMonthlySpend += chatgpt.monthlySpend;
+          optimizedMonthlySpend += chatgpt.monthlySpend;
+        }
+      } else {
+        currentMonthlySpend += chatgpt.monthlySpend;
+        optimizedMonthlySpend += chatgpt.monthlySpend;
+      }
     }
     if (claude) {
       currentMonthlySpend += claude.monthlySpend;

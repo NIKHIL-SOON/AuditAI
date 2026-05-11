@@ -11,6 +11,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 export const toolSchema = z.object({
   name: z.string().min(1, "Tool name is required"),
+  category: z.string().optional(),
   tier: z.string().min(1, "Tier is required"),
   users: z.number().min(1, "Must have at least 1 user"),
   monthlySpend: z.number().min(0, "Spend cannot be negative")
@@ -25,42 +26,74 @@ export const formSchema = z.object({
 export type FormValues = z.infer<typeof formSchema>;
 
 const PREDEFINED_TOOLS = [
-  "Cursor", "Copilot", "Claude", "ChatGPT", "APIs", "Gemini", "Windsurf/v0", "Other"
+  "Cursor", "GitHub Copilot", "Claude", "ChatGPT", "APIs", "Gemini", "Windsurf/v0", "Other"
 ];
 
-const TOOL_TIERS: Record<string, { tier: string, price: number }[]> = {
-  "Cursor": [
-    { tier: "Hobby", price: 0 },
-    { tier: "Pro", price: 20 },
-    { tier: "Business", price: 40 },
-    { tier: "Enterprise", price: 100 }
-  ],
-  "ChatGPT": [
-    { tier: "Plus", price: 20 },
-    { tier: "Team", price: 30 },
-    { tier: "Enterprise", price: 0 }
-  ],
-  "Gemini": [
-    { tier: "Pro", price: 0 },
-    { tier: "Ultra", price: 20 },
-    { tier: "Business", price: 0 }
-  ],
-  "Claude": [
-    { tier: "Free", price: 0 },
-    { tier: "Pro", price: 20 },
-    { tier: "Team", price: 30 },
-    { tier: "Enterprise", price: 0 }
-  ],
-  "Copilot": [
-    { tier: "Individual", price: 10 },
-    { tier: "Business", price: 19 },
-    { tier: "Enterprise", price: 39 }
-  ],
-  "Windsurf/v0": [
-    { tier: "Free", price: 0 },
-    { tier: "Pro", price: 15 },
-    { tier: "Team", price: 25 }
-  ]
+type TierInfo = { tier: string, price: number };
+type ToolConfig = 
+  | { type: "nested", categories: Record<string, TierInfo[]> }
+  | { type: "flat", tiers: TierInfo[] };
+
+const TOOL_CONFIG: Record<string, ToolConfig> = {
+  "ChatGPT": {
+    type: "nested",
+    categories: {
+      "Personal": [
+        { tier: "Free", price: 0 },
+        { tier: "Plus", price: 20 }
+      ],
+      "Business": [
+        { tier: "Team", price: 30 },
+        { tier: "Enterprise", price: 0 }
+      ]
+    }
+  },
+  "Gemini": {
+    type: "nested",
+    categories: {
+      "Personal": [
+        { tier: "Pro", price: 0 },
+        { tier: "Ultra", price: 20 }
+      ],
+      "Business": [
+        { tier: "Business", price: 30 },
+        { tier: "Enterprise", price: 0 }
+      ]
+    }
+  },
+  "Cursor": {
+    type: "flat",
+    tiers: [
+      { tier: "Hobby", price: 0 },
+      { tier: "Pro", price: 20 },
+      { tier: "Business", price: 40 }
+    ]
+  },
+  "GitHub Copilot": {
+    type: "flat",
+    tiers: [
+      { tier: "Individual", price: 10 },
+      { tier: "Business", price: 19 },
+      { tier: "Enterprise", price: 39 }
+    ]
+  },
+  "Claude": {
+    type: "flat",
+    tiers: [
+      { tier: "Free", price: 0 },
+      { tier: "Pro", price: 20 },
+      { tier: "Team", price: 30 },
+      { tier: "Enterprise", price: 0 }
+    ]
+  },
+  "Windsurf/v0": {
+    type: "flat",
+    tiers: [
+      { tier: "Free", price: 0 },
+      { tier: "Pro", price: 15 },
+      { tier: "Team", price: 25 }
+    ]
+  }
 };
 
 import { useLocalStorage } from "@/frontend/hooks/use-local-storage";
@@ -160,9 +193,24 @@ export function SpendForm() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Your AI Stack</h3>
             <div className="grid grid-cols-1 gap-4">
-              {fields.map((field, index) => (
+              {fields.map((field, index) => {
+                const currentToolName = watch(`tools.${index}.name`);
+                const config = TOOL_CONFIG[currentToolName];
+                const isNested = config?.type === "nested";
+                
+                let tierOptions: { tier: string, price: number }[] | null = null;
+                if (config) {
+                  if (config.type === "nested") {
+                     const currentCat = watch(`tools.${index}.category`) || Object.keys(config.categories)[0];
+                     tierOptions = config.categories[currentCat] || [];
+                  } else {
+                     tierOptions = config.tiers;
+                  }
+                }
+                
+                return (
                 <Card key={field.id} className="p-4 relative bg-gray-50/50">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
                     <div className="space-y-2">
                       <label htmlFor={`tools.${index}.name`} className="text-sm font-medium">Tool Name</label>
                       <select
@@ -171,11 +219,22 @@ export function SpendForm() {
                         {...register(`tools.${index}.name` as const, {
                           onChange: (e) => {
                             const newTool = e.target.value;
-                            const tiers = TOOL_TIERS[newTool];
-                            if (tiers && tiers.length > 0) {
-                              const defaultTier = tiers[0];
-                              setValue(`tools.${index}.tier`, defaultTier.tier);
-                              setValue(`tools.${index}.monthlySpend`, defaultTier.price);
+                            const newConfig = TOOL_CONFIG[newTool];
+                            if (newConfig) {
+                              if (newConfig.type === "nested") {
+                                const defaultCat = Object.keys(newConfig.categories)[0];
+                                const defaultTier = newConfig.categories[defaultCat][0];
+                                setValue(`tools.${index}.category`, defaultCat);
+                                setValue(`tools.${index}.tier`, defaultTier.tier);
+                                setValue(`tools.${index}.monthlySpend`, defaultTier.price);
+                              } else {
+                                const defaultTier = newConfig.tiers[0];
+                                setValue(`tools.${index}.category`, undefined);
+                                setValue(`tools.${index}.tier`, defaultTier.tier);
+                                setValue(`tools.${index}.monthlySpend`, defaultTier.price);
+                              }
+                            } else {
+                              setValue(`tools.${index}.category`, undefined);
                             }
                           }
                         })}
@@ -185,24 +244,51 @@ export function SpendForm() {
                       {errors.tools?.[index]?.name && <p className="text-sm text-red-500" role="alert">{errors.tools[index]?.name?.message}</p>}
                     </div>
 
+                    {isNested && config && config.type === "nested" && (
+                      <div className="space-y-2">
+                        <label htmlFor={`tools.${index}.category`} className="text-sm font-medium">Category</label>
+                        <select
+                          id={`tools.${index}.category`}
+                          className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...register(`tools.${index}.category` as const, {
+                            onChange: (e) => {
+                              const selectedCat = e.target.value;
+                              const currentConfig = TOOL_CONFIG[watch(`tools.${index}.name`)];
+                              if (currentConfig && currentConfig.type === "nested") {
+                                const tiers = currentConfig.categories[selectedCat];
+                                if (tiers && tiers.length > 0) {
+                                  setValue(`tools.${index}.tier`, tiers[0].tier);
+                                  setValue(`tools.${index}.monthlySpend`, tiers[0].price);
+                                }
+                              }
+                            }
+                          })}
+                        >
+                          {Object.keys(config.categories).map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                        {errors.tools?.[index]?.category && <p className="text-sm text-red-500" role="alert">{errors.tools[index]?.category?.message}</p>}
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <label htmlFor={`tools.${index}.tier`} className="text-sm font-medium">Plan Tier</label>
-                      {TOOL_TIERS[watch(`tools.${index}.name`)] ? (
+                      {tierOptions ? (
                         <select
                           id={`tools.${index}.tier`}
                           className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           {...register(`tools.${index}.tier` as const, {
                             onChange: (e) => {
                               const selectedTierName = e.target.value;
-                              const toolName = watch(`tools.${index}.name`);
-                              const tierInfo = TOOL_TIERS[toolName]?.find(t => t.tier === selectedTierName);
+                              const tierInfo = tierOptions?.find(t => t.tier === selectedTierName);
                               if (tierInfo) {
                                 setValue(`tools.${index}.monthlySpend`, tierInfo.price);
                               }
                             }
                           })}
                         >
-                          {TOOL_TIERS[watch(`tools.${index}.name`)].map(t => (
+                          {tierOptions.map(t => (
                             <option key={t.tier} value={t.tier}>{t.tier}</option>
                           ))}
                         </select>
@@ -249,13 +335,14 @@ export function SpendForm() {
                     </div>
                   </div>
                 </Card>
-              ))}
+                );
+              })}
             </div>
             
             <Button 
               type="button" 
               variant="outline" 
-              onClick={() => append({ name: "ChatGPT", tier: "Plus", users: 1, monthlySpend: 20 })}
+              onClick={() => append({ name: "ChatGPT", category: "Personal", tier: "Plus", users: 1, monthlySpend: 20 })}
               className="w-full md:w-auto"
             >
               <Plus className="mr-2 h-4 w-4" /> Add Another Tool
