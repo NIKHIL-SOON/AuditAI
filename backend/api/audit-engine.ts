@@ -42,8 +42,9 @@ export function evaluateSpend(context: AuditContext): AuditResult {
   const claude = toolMap.get('claude');
   const gemini = toolMap.get('gemini');
 
-  function roundCurrency(val: number): number {
-    return Math.round(val * 100) / 100;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function roundCurrency(val: any): number {
+    return Math.round(Number(val) * 100) / 100;
   }
 
   // 1. Evaluate Coding Assistants
