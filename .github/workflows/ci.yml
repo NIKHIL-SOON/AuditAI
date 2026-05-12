@@ -15,7 +15,3 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build
-        env:
-          SUPABASE_URL: "https://mock.supabase.co"
-          SUPABASE_SERVICE_ROLE_KEY: "mock-key"
-          RESEND_API_KEY: "mock-key"
