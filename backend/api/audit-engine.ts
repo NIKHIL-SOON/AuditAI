@@ -42,7 +42,9 @@ export function evaluateSpend(context: AuditContext): AuditResult {
   const claude = toolMap.get('claude');
   const gemini = toolMap.get('gemini');
 
-  const roundCurrency = (val: number): number => { return Math.round(val * 100) / 100; };
+  function roundCurrency(val: number): number {
+    return Math.round(val * 100) / 100;
+  }
 
   // 1. Evaluate Coding Assistants
   if (cursor && copilot) {
