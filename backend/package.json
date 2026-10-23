@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "vitest run && node --test ../tests/ests/audit-engine.regression.mjs"
+    "test": "vitest run && node --test ../tests/audit-engine.regression.mjs"
   },
   "devDependencies": {
     "typescript": "^5",
