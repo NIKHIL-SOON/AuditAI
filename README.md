@@ -19,7 +19,7 @@ A free web app for startups to audit their AI tool spending and discover cost-sa
 5. **LLM Summary**: Using Anthropic's Claude 3 API for its superior nuance in generating human-like, empathetic summaries of financial data.
 
 ## Deployed URL
-[https://auditai.vercel.app](https://auditai.vercel.app) (Replace with your actual Vercel/Netlify deployment URL)
+[https://audit-ai-frontend-pi.vercel.app](https://audit-ai-frontend-pi.vercel.app)
 
 ## Project Structure
 We utilize a strict separation of concerns via an npm workspace monorepo:
