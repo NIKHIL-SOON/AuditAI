@@ -15,6 +15,7 @@ export default function ResultsPage() {
   const [savedData] = useLocalStorage<FormValues | null>("audit-form-state", null);
   const [result, setResult] = useState<AuditResult | null>(null);
   const [summary, setSummary] = useState<string>("Analyzing your AI stack...");
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
@@ -43,7 +44,16 @@ export default function ResultsPage() {
   };
 
   useEffect(() => {
-    if (savedData) {
+    if (!savedData) {
+      // Give client-side storage a brief chance to hydrate after navigation,
+      // then stop instead of leaving direct /results visitors on a spinner.
+      const timer = window.setTimeout(() => {
+        setLoadError("No saved audit data found. Please complete the audit form first.");
+      }, 1000);
+      return () => window.clearTimeout(timer);
+    }
+
+    try {
       const res = evaluateSpend({
         useCase: savedData.useCase,
         teamSize: savedData.teamSize,
@@ -51,13 +61,35 @@ export default function ResultsPage() {
       });
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setResult(res);
+      setLoadError(null);
 
       // Fetch AI summary
       getAiSummaryAction(res)
         .then(text => setSummary(text))
         .catch(() => setSummary("Failed to generate summary."));
+    } catch (error) {
+      console.error("Failed to calculate audit results:", error);
+      setLoadError("We could not calculate results from the saved form data. Please review the form and try again.");
     }
   }, [savedData]);
+
+  if (loadError) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gray-50/50 px-4">
+        <Card className="max-w-md w-full text-center">
+          <CardHeader>
+            <CardTitle>Audit results unavailable</CardTitle>
+            <CardDescription>{loadError}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/" className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-700">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Audit Form
+            </Link>
+          </CardContent>
+        </Card>
+      </main>
+    );
+  }
 
   if (!result) {
     return (
