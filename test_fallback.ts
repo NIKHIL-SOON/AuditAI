@@ -3,6 +3,7 @@ import { generateSummary } from './backend/api/ai-summary';
 
 async function test() {
   const result = evaluateSpend({
+    useCase: "Mixed",
     teamSize: 20,
     tools: [
       { name: 'ChatGPT', tier: 'Plus', users: 20, monthlySpend: 400 },
