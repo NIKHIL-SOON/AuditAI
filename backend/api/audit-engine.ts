@@ -29,134 +29,100 @@ export interface AuditResult {
   recommendations: Recommendation[];
 }
 
-export function evaluateSpend(context: AuditContext): AuditResult {
-  const currentMonthlySpend = Math.round(context.tools.reduce((sum, t) => sum + t.monthlySpend, 0) * 100) / 100;
-  let totalSavings = 0;
+// Existing project assumptions, NOT verified current vendor prices.
+// Callers can override them with verified, like-for-like per-seat quotes.
+export const DEFAULT_BASELINES = Object.freeze({ cursor: 20, copilot: 19, chatgpt: 30 });
+export type Baselines = Partial<Record<'cursor' | 'copilot' | 'chatgpt', number>>;
+
+export function evaluateSpend(context: AuditContext, baselines: Baselines = DEFAULT_BASELINES): AuditResult {
+  if (!context || !Number.isInteger(context.teamSize) || context.teamSize < 1 ||
+      typeof context.useCase !== 'string' || !context.useCase.trim() || !Array.isArray(context.tools)) {
+    throw new Error('A use case, positive integer team size and tool list are required.');
+  }
+  const money = (n: number) => {
+    const cents = Math.round((n + Number.EPSILON) * 100);
+    if (!Number.isFinite(n) || n < 0 || !Number.isSafeInteger(cents)) {
+      throw new Error('Spend must be a finite, non-negative amount within the supported range.');
+    }
+    return cents;
+  };
+  const normalize = (name: string) => {
+    const key = name.trim().toLowerCase();
+    return key === 'copilot' ? 'github copilot' : key;
+  };
+  const tools = new Map<string, UserTool & { cents: number }>();
+  let currentCents = 0;
+  for (const tool of context.tools) {
+    if (!tool || typeof tool.name !== 'string' || !tool.name.trim() || typeof tool.tier !== 'string' ||
+        !tool.tier.trim() || !Number.isInteger(tool.users) || tool.users < 1) {
+      throw new Error('Each tool needs a name, tier and positive integer seat count.');
+    }
+    const key = normalize(tool.name);
+    if (tools.has(key)) throw new Error('Combine duplicate tool entries before running the audit.');
+    const cents = money(tool.monthlySpend);
+    currentCents += cents;
+    if (!Number.isSafeInteger(currentCents) || !Number.isSafeInteger(currentCents * 12)) {
+      throw new Error('Total spend exceeds the supported range.');
+    }
+    tools.set(key, { ...tool, name: tool.name.trim(), cents });
+  }
+  for (const value of Object.values(baselines)) {
+    if (value !== undefined) money(value);
+  }
+
   const recommendations: Recommendation[] = [];
+  const removed = new Set<string>();
+  let savingsCents = 0;
+  const cursor = tools.get('cursor');
+  const copilot = tools.get('github copilot');
+  const chatgpt = tools.get('chatgpt');
+  const claude = tools.get('claude');
 
-  const toolMap = new Map(context.tools.map(t => [t.name.toLowerCase(), t]));
-
-  const cursor = toolMap.get('cursor');
-  const copilot = toolMap.get('github copilot') || toolMap.get('copilot');
-  const chatgpt = toolMap.get('chatgpt');
-  const claude = toolMap.get('claude');
-  const gemini = toolMap.get('gemini');
-
-  function roundCurrency(val: number | string): number {
-    const numericValue = typeof val === 'string' ? parseFloat(val) : val;
-    return Math.round(numericValue * 100) / 100;
-  }
-
-  // 1. Evaluate Coding Assistants
-  if (cursor && copilot) {
-    const costPerUser = roundCurrency(copilot.monthlySpend / copilot.users);
-    const savings = roundCurrency(costPerUser * context.teamSize);
+  const consolidate = (key: string, retained: string) => {
+    const tool = tools.get(key);
+    if (!tool || removed.has(key) || tool.cents === 0) return;
+    removed.add(key);
+    savingsCents += tool.cents;
     recommendations.push({
-      toolName: 'GitHub Copilot',
+      toolName: tool.name,
       action: 'CONSOLIDATE',
-      savings: savings,
-      rationale: `Dropping GitHub Copilot ($${costPerUser}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
+      savings: tool.cents / 100,
+      rationale: `Potential saving of $${(tool.cents / 100).toFixed(2)}/mo only if all ${tool.users} seats can be cancelled and ${retained} covers their needs at no extra cost. Confirm user overlap, features and contract terms first.`
     });
-    totalSavings += savings;
-  } else if (copilot) {
-    if (copilot.tier.toLowerCase() === 'enterprise' && context.teamSize <= 10) {
-      const costPerUser = roundCurrency(copilot.monthlySpend / copilot.users);
-      const recommendedCost = 19;
-      const costDiff = roundCurrency(costPerUser - recommendedCost);
-      if (costDiff > 0) {
-        const savings = roundCurrency(costDiff * context.teamSize);
-        recommendations.push({
-          toolName: 'GitHub Copilot',
-          action: 'DOWNGRADE',
-          savings: savings,
-          rationale: `Downgrading GitHub Copilot ($${costDiff}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
-        });
-        totalSavings += savings;
-      }
-    }
-  }
-
-  if (cursor) {
-    if ((cursor.tier.toLowerCase() === 'business' || cursor.tier.toLowerCase() === 'enterprise') && context.teamSize <= 10) {
-      const costPerUser = roundCurrency(cursor.monthlySpend / cursor.users);
-      const recommendedCost = 20;
-      const costDiff = roundCurrency(costPerUser - recommendedCost);
-      if (costDiff > 0) {
-        const savings = roundCurrency(costDiff * context.teamSize);
-        recommendations.push({
-          toolName: 'Cursor',
-          action: 'DOWNGRADE',
-          savings: savings,
-          rationale: `Downgrading Cursor ($${costDiff}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
-        });
-        totalSavings += savings;
-      }
-    }
-  }
-
-  // 2. Evaluate Chatbots
-  if (chatgpt && claude) {
-    const costPerUser = roundCurrency(claude.monthlySpend / claude.users);
-    const savings = roundCurrency(costPerUser * context.teamSize);
+  };
+  const downgrade = (key: string, baseline: number | undefined, tiers: string[]) => {
+    const tool = tools.get(key);
+    if (!tool || removed.has(key) || baseline === undefined || context.teamSize > 10 ||
+        !tiers.includes(tool.tier.trim().toLowerCase())) return;
+    // Multiply by purchased seats, not the overall team size. Work in cents.
+    const targetCents = money(baseline) * tool.users;
+    const delta = Math.max(0, tool.cents - targetCents);
+    if (delta === 0) return;
+    savingsCents += delta;
     recommendations.push({
-      toolName: 'Claude',
-      action: 'CONSOLIDATE',
-      savings: savings,
-      rationale: `Dropping Claude ($${costPerUser}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
+      toolName: tool.name,
+      action: 'DOWNGRADE',
+      savings: delta / 100,
+      rationale: `Potential saving of $${(delta / 100).toFixed(2)}/mo across ${tool.users} seats using an assumed $${baseline}/seat baseline. This is not a verified current quote; confirm current pricing, feature requirements and eligibility before changing plans.`
     });
-    totalSavings += savings;
-  }
+  };
 
-  if (chatgpt) {
-    if (chatgpt.tier.toLowerCase() === 'enterprise' && context.teamSize <= 10) {
-      const costPerUser = roundCurrency(chatgpt.monthlySpend / chatgpt.users);
-      const recommendedCost = 30;
-      const costDiff = roundCurrency(costPerUser - recommendedCost);
-      if (costDiff > 0) {
-        const savings = roundCurrency(costDiff * context.teamSize);
-        recommendations.push({
-          toolName: 'ChatGPT',
-          action: 'DOWNGRADE',
-          savings: savings,
-          rationale: `Downgrading ChatGPT ($${costDiff}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
-        });
-        totalSavings += savings;
-      }
-    }
-  }
-
-  // 3. Alternative Tool Logic
-  if (context.useCase.toLowerCase() === 'coding') {
-    const activeChatbot = chatgpt || claude || gemini;
-    const activeCodingAssist = cursor || copilot;
-    
-    if (activeChatbot && activeCodingAssist) {
-      const primaryChatbot = chatgpt || claude || gemini;
-      if (primaryChatbot) {
-        const costPerUser = roundCurrency(primaryChatbot.monthlySpend / primaryChatbot.users);
-        const savings = roundCurrency(costPerUser * context.teamSize);
-        
-        recommendations.push({
-          toolName: primaryChatbot.name,
-          action: 'CONSOLIDATE',
-          savings: savings,
-          rationale: `Dropping ${primaryChatbot.name} ($${costPerUser}/user) for your team of ${context.teamSize} saves $${savings}/mo.`
-        });
-        totalSavings += savings;
-      }
-    }
-  }
-
-  totalSavings = roundCurrency(totalSavings);
-  const optimizedMonthlySpend = roundCurrency(Math.max(0, currentMonthlySpend - totalSavings));
+  if (cursor && copilot) consolidate('github copilot', cursor.name);
+  // Cancellation and downgrade are mutually exclusive for any one subscription.
+  downgrade('github copilot', baselines.copilot, ['enterprise']);
+  downgrade('cursor', baselines.cursor, ['business', 'enterprise']);
+  if (chatgpt && claude) consolidate('claude', chatgpt.name);
+  downgrade('chatgpt', baselines.chatgpt, ['enterprise']);
+  // A coding use case alone does not establish that a general chatbot is redundant.
+  // Do not cancel a chatbot merely because a coding assistant is present.
 
   return {
-    useCase: context.useCase,
+    useCase: context.useCase.trim(),
     teamSize: context.teamSize,
-    currentMonthlySpend,
-    optimizedMonthlySpend,
-    monthlySavings: totalSavings,
-    annualSavings: roundCurrency(totalSavings * 12),
-    recommendations
+    currentMonthlySpend: currentCents / 100,
+    optimizedMonthlySpend: (currentCents - savingsCents) / 100,
+    monthlySavings: savingsCents / 100,
+    annualSavings: (savingsCents * 12) / 100,
+    recommendations,
   };
 }
