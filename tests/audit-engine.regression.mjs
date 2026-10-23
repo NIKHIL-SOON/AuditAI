@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { stripTypeScriptTypes } from 'node:module';
-const source = readFileSync(new URL('../../backend/api/audit-engine.ts', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../backend/api/audit-engine.ts', import.meta.url), 'utf8');
 const js = stripTypeScriptTypes(source, { mode: 'strip', disableWarning: true });
 const { evaluateSpend } = await import(`data:text/javascript;base64,${Buffer.from(js).toString('base64')}`);
 const tool = (name, users, monthlySpend, tier = 'Pro') => ({ name, users, monthlySpend, tier });
