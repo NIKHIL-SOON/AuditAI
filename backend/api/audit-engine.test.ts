@@ -4,6 +4,7 @@ import { evaluateSpend, AuditContext } from './audit-engine';
 describe('Audit Engine Evaluator', () => {
   it('should recommend consolidating Cursor and Copilot', () => {
     const context: AuditContext = {
+      useCase: 'Mixed',
       teamSize: 10,
       tools: [
         { name: 'Cursor', tier: 'Pro', users: 5, monthlySpend: 100 },
@@ -23,6 +24,7 @@ describe('Audit Engine Evaluator', () => {
 
   it('should recommend downgrading Cursor Business for small teams', () => {
     const context: AuditContext = {
+      useCase: 'Mixed',
       teamSize: 3,
       tools: [
         { name: 'Cursor', tier: 'Business', users: 3, monthlySpend: 120 }
@@ -38,6 +40,7 @@ describe('Audit Engine Evaluator', () => {
 
   it('should recommend consolidating ChatGPT and Claude', () => {
     const context: AuditContext = {
+      useCase: 'Mixed',
       teamSize: 20,
       tools: [
         { name: 'ChatGPT', tier: 'Plus', users: 10, monthlySpend: 200 },
@@ -47,13 +50,14 @@ describe('Audit Engine Evaluator', () => {
 
     const result = evaluateSpend(context);
     
-    expect(result.recommendations[0].toolName).toBe('Multiple Chatbots');
+    expect(result.recommendations[0].toolName).toBe('Claude');
     expect(result.recommendations[0].action).toBe('CONSOLIDATE');
     expect(result.monthlySavings).toBe(200); // overlap of 10 users * $20
   });
 
-  it('should calculate zero savings if stack is perfectly optimized', () => {
+  it('should calculate zero savings if no matching rule finds savings', () => {
     const context: AuditContext = {
+      useCase: 'Mixed',
       teamSize: 5,
       tools: [
         { name: 'Cursor', tier: 'Pro', users: 5, monthlySpend: 100 },
