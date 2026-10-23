@@ -141,8 +141,10 @@ export function SpendForm() {
     return null; // Avoid hydration mismatch on initial render
   }
 
-  const onSubmit = () => {
-    // Form is already saved by watch hook
+  const onSubmit = (values: FormValues) => {
+    // Save the validated submission explicitly so a default, untouched form
+    // still has data when the results page reads localStorage.
+    setSavedData(values);
     router.push("/results");
   };
 
